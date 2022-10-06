@@ -1,27 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"order-api/models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
+	"gorm.io/gorm"
 )
-
-func Simple(verr validator.ValidationErrors) map[string]string {
-	errs := make(map[string]string)
-
-	for _, f := range verr {
-		err := f.ActualTag()
-		if f.Param() != "" {
-			err = fmt.Sprintf("%s=%s", err, f.Param())
-		}
-		errs[f.Field()] = err
-	}
-
-	return errs
-}
 
 func (h *Controller) GetOrders(c *gin.Context) {
 	var (
@@ -30,8 +15,11 @@ func (h *Controller) GetOrders(c *gin.Context) {
 	)
 
 	h.DB.Preload("Items").Find(&orders)
+
 	if len(orders) <= 0 {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "No order found!"})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"message": "No order found!",
+		})
 	} else {
 		result = gin.H{
 			"status": "success",
@@ -50,7 +38,7 @@ func (h *Controller) CreateOrder(ctx *gin.Context) {
 	)
 
 	if err := ctx.ShouldBindJSON(&order); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 
@@ -74,14 +62,82 @@ func (h *Controller) GetOrder(ctx *gin.Context) {
 
 	id := ctx.Param("id")
 	h.DB.Preload("Items").First(&order, id)
+
 	if order.ID == 0 {
-		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "No order found!"})
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"message": "No order found!",
+		})
+
 		return
 	}
 
 	result = gin.H{
 		"status": "success",
 		"data":   order,
+	}
+
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (h *Controller) UpdateOrder(ctx *gin.Context) {
+	var (
+		order  models.Order
+		result gin.H
+	)
+
+	id := ctx.Param("id")
+	h.DB.First(&order, id)
+
+	if order.ID == 0 {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"message": "No order found!",
+		})
+
+		return
+	}
+
+	if err := ctx.ShouldBindJSON(&order); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	h.DB.Save(&order)
+	h.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&order)
+
+	result = gin.H{
+		"message": "success update order",
+		"data":    order,
+	}
+
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (h *Controller) DeleteOrder(ctx *gin.Context) {
+	var (
+		order  models.Order
+		result gin.H
+	)
+
+	id := ctx.Param("id")
+	h.DB.First(&order, id)
+
+	if order.ID == 0 {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"message": "No order found!",
+		})
+
+		return
+	}
+
+	h.DB.Delete(&order)
+	//delete association
+	h.DB.Model(&order).Association("Items").Clear()
+
+	result = gin.H{
+		"message": "success delete order",
 	}
 
 	ctx.JSON(http.StatusOK, result)
