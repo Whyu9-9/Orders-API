@@ -13,27 +13,23 @@ func (h *Controller) GetOrders(c *gin.Context) {
 		result gin.H
 	)
 
-	h.DB.Find(&orders)
+	h.DB.Preload("Items").Find(&orders)
 	if len(orders) <= 0 {
-		result = gin.H{
-			"result": nil,
-			"count":  0,
-		}
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "No order found!"})
 	} else {
 		result = gin.H{
-			"result": orders,
-			"count":  len(orders),
+			"status": "success",
+			"data":   orders,
 		}
-	}
 
-	c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, result)
+	}
 
 }
 
 func (h *Controller) CreateOrder(ctx *gin.Context) {
 	var (
 		order  models.Order
-		item   models.Item
 		result gin.H
 	)
 
@@ -43,7 +39,6 @@ func (h *Controller) CreateOrder(ctx *gin.Context) {
 	}
 
 	h.DB.Create(&order)
-	h.DB.Create(&item)
 	result = gin.H{
 		"result": order,
 	}

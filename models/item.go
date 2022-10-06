@@ -4,8 +4,8 @@ import "gorm.io/gorm"
 
 type Item struct {
 	gorm.Model
-	ItemID      uint   `json:"itemId" gorm:"primaryKey"`
-	ItemCode    string `json:"itemcCode"`
+	ID          uint   `gorm:"primaryKey"`
+	ItemCode    string `json:"itemCode"`
 	Descritpion string `json:"description"`
 	Quantity    int    `json:"quantity"`
 	OrderID     uint   `json:"orderID"`

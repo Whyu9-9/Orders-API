@@ -8,7 +8,7 @@ import (
 
 type Order struct {
 	gorm.Model
-	OrderID      uint      `json:"orderId" gorm:"primaryKey"`
+	ID           uint      `gorm:"primaryKey"`
 	CustomerName string    `json:"customerName"`
 	OrderedAt    time.Time `json:"orderedAt"`
 	Items        []Item    `json:"items" gorm:"foreignKey:OrderID"`
