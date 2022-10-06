@@ -35,6 +35,7 @@ require (
 
 require (
 	github.com/gin-gonic/gin v1.8.1
+	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	gorm.io/driver/postgres v1.3.10

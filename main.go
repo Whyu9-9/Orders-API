@@ -15,6 +15,7 @@ func main() {
 
 	router.GET("/orders", g.GetOrders)
 	router.POST("/orders", g.CreateOrder)
+	router.GET("/order/:id", g.GetOrder)
 
 	router.Run(":3000")
 }
