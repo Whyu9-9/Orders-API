@@ -1,12 +1,36 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"order-api/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
+
+type ApiError struct {
+	Field   string
+	Message string
+}
+
+func msgForTag(tag string) string {
+	switch tag {
+	case "required":
+		return "This field is required"
+	case "min":
+		return "This field must be at least 3 characters"
+	case "max":
+		return "This field must be at most 10 characters"
+	case "alphanum":
+		return "This field must be alphanumeric"
+	case "unique":
+		return "This field must be unique"
+	default:
+		return "This field is invalid"
+	}
+}
 
 func (h *Controller) GetOrders(c *gin.Context) {
 	var (
@@ -38,10 +62,18 @@ func (h *Controller) CreateOrder(ctx *gin.Context) {
 	)
 
 	if err := ctx.ShouldBindJSON(&order); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		var ve validator.ValidationErrors
 
+		if errors.As(err, &ve) {
+			out := make([]ApiError, len(ve))
+			for i, fe := range ve {
+				out[i] = ApiError{fe.Field(), msgForTag(fe.Tag())}
+			}
+
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"errors": out,
+			})
+		}
 		return
 	}
 
@@ -97,10 +129,18 @@ func (h *Controller) UpdateOrder(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindJSON(&order); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		var ve validator.ValidationErrors
 
+		if errors.As(err, &ve) {
+			out := make([]ApiError, len(ve))
+			for i, fe := range ve {
+				out[i] = ApiError{fe.Field(), msgForTag(fe.Tag())}
+			}
+
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"errors": out,
+			})
+		}
 		return
 	}
 

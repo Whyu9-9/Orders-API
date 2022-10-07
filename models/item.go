@@ -7,6 +7,6 @@ type Item struct {
 	ID          uint   `gorm:"primaryKey"`
 	ItemCode    string `json:"itemCode" binding:"required, min=3, max=10, alphanum, unique"`
 	Description string `json:"description" binding:"required"`
-	Quantity    int    `json:"quantity" binding:"required"`
+	Quantity    int    `json:"quantity" binding:"required, min=1, numeric"`
 	OrderID     uint   `json:"orderID" binding:"required"`
 }
